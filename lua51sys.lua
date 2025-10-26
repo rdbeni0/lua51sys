@@ -44,15 +44,15 @@ end
 --- Create directories recursively, equivalent to the shell command "mkdir -p"
 --- Attempts to create the named directory only if it does not already exist.
 --- Returns true on success, false and an error message on failure.
---- @param folderName string Directory path to create
+--- @param directoryName string Directory path to create
 --- @return boolean success true when directory exists or was created successfully
 --- @return string|nil err Error message when creation failed, nil on success
-function lua51sys.mkdir(folderName)
-	-- Check if the folder exists
-	if not lfs.attributes(folderName, "mode") then
-		local success, err = lfs.mkdir(folderName)
+function lua51sys.mkdir(directoryName)
+	-- Check if the directory exists
+	if not lfs.attributes(directoryName, "mode") then
+		local success, err = lfs.mkdir(directoryName)
 		if not success then
-			print("Error creating folder: " .. err)
+			print("Error creating directory: " .. err)
 			return false
 		end
 		return true

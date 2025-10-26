@@ -295,7 +295,7 @@ function lua51sys.calculate_md5(file_path)
 end
 
 --- Find an executable in PATH (Unix/Linux only).
---- Works like shutil.which; returns the absolute path to the executable or nil if not found.
+--- Works like "shutil.which"; returns the absolute path to the executable or nil if not found.
 --- @param cmd string Command name to search for.
 --- @return string|nil Absolute path to executable on success; nil if not found or on error.
 function lua51sys.which(cmd)
@@ -365,7 +365,7 @@ end
 function lua51sys.ssh_check_connection(ip)
 	local success, code = lua51sys.execute("ping -i 0.3 -c 2 " .. ip .. " > /dev/null 2>&1")
 
-	-- We only check `success`, which is a boolean in the lua51sys.execute contract
+	-- We only check `success`, which is a boolean in the `lua51sys.execute`
 	if not success then
 		print("WARNING - SSH CONNECTION NOT WORKING! CHECK SSH! Exit code: " .. tostring(code))
 		lua51sys.exit(1)
@@ -423,7 +423,7 @@ function lua51sys.directory_exists(path)
 end
 
 --- Check whether a path is a symbolic link (Linux/Unix only).
---- Uses the external shell `test -L` command.
+--- Uses the external shell "test -L" command.
 --- This function validates its argument and raises an error for invalid input.
 --- @param path string Non-empty file system path to check.
 --- @return boolean True if the path is a symbolic link, false otherwise.

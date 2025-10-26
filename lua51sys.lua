@@ -456,9 +456,9 @@ end
 function lua51sys.find(dir, pattern_base)
 	local files = {}
 	-- local lua_pattern = pattern_base
-	-- :gsub("([%.%+%-%%%[%]%^%$%(%)])", "%%%1") -- Escape dla znaków specjalnych
-	-- :gsub("\\", "%%\\") -- Escape dla backslasha `\`
-	-- :gsub("%?", ".")   -- Zamiana `?` na `.`
+	-- :gsub("([%.%+%-%%%[%]%^%$%(%)])", "%%%1") -- Escape for special marks
+	-- :gsub("\\", "%%\\") -- Escape for `\`
+	-- :gsub("%?", ".")   -- Change `?` na `.`
 
 	local lua_pattern = pattern_base:gsub("([%.%+%-%%%[%]%^%$%(%)%*%?])", "%%%1"):gsub("\\", "%%\\")
 	-- Dodajemy .* na poczatku i koncu

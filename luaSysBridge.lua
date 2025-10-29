@@ -2,7 +2,7 @@
 -- -*- mode: lua -*-
 -- LUA COMPATIBILITY: LuaJIT, 5.1, 5.2, 5.3, 5.4
 
---- This module provides the core "lua51sys" functionality which can be used by other Lua scripts.
+--- This module provides the core "luaSysBridge" functionality which can be used by other Lua scripts.
 --- It is recommended that all system-level Lua scripts import this module.
 --- Everything has been tested for compatibility with Lua 5.1, 5.2, 5.3, 5.4, and LuaJIT.
 --- Wrapper functions have been implemented to ensure backward/forward compatibility for essential operations.
@@ -11,13 +11,13 @@
 
 local lfs = require("lfs")
 
-local lua51sys = {}
+local luaSysBridge = {}
 
 --- Executes a system command and normalizes the return values across diffrent Lua versions.
 --- @param cmd string The system command to execute.
 --- @return boolean success True if the command executed successfully (exit code == 0), false otherwise (or if the command couldn't run).
 --- @return number code The exit code (or error/signal code if applicable).
-function lua51sys.execute(cmd)
+function luaSysBridge.execute(cmd)
 	-- Execute the system command
 	local result, exit_type, code = os.execute(cmd)
 
@@ -47,7 +47,7 @@ end
 --- @param directoryName string Directory path to create
 --- @return boolean success true when directory exists or was created successfully
 --- @return string|nil err Error message when creation failed, nil on success
-function lua51sys.mkdir(directoryName)
+function luaSysBridge.mkdir(directoryName)
 	-- Check if the directory exists
 	if not lfs.attributes(directoryName, "mode") then
 		local success, err = lfs.mkdir(directoryName)
@@ -63,9 +63,9 @@ end
 --- @param dir_path string Path to the directory to remove.
 --- @return boolean|nil true when directory was removed successfully.
 --- @return string|nil Error message when removal failed or directory does not exist.
-function lua51sys.remove_dir(dir_path)
-	if lua51sys.directory_exists(dir_path) then
-		local success, err = lua51sys.execute("rm -rf " .. dir_path)
+function luaSysBridge.remove_dir(dir_path)
+	if luaSysBridge.directory_exists(dir_path) then
+		local success, err = luaSysBridge.execute("rm -rf " .. dir_path)
 		if success then
 			return true
 		else
@@ -78,7 +78,7 @@ end
 --- Wrapper around os.remove.
 --- @param file_path string Path to the file to remove.
 --- @return boolean|nil true on success; nil plus error message on failure.
-function lua51sys.remove(file_path)
+function luaSysBridge.remove(file_path)
 	-- Currently all versions work the same, but this may change in the future (5.4++)
 	return os.remove(file_path)
 end
@@ -87,7 +87,7 @@ end
 --- @param file_path string Current path of the file.
 --- @param new_file_path string New path for the file.
 --- @return boolean|nil true on success; nil plus error message on failure.
-function lua51sys.rename(file_path, new_file_path)
+function luaSysBridge.rename(file_path, new_file_path)
 	-- Currently all versions work the same, but this may change in the future (5.4++)
 	return os.rename(file_path, new_file_path)
 end
@@ -96,7 +96,7 @@ end
 --- @param src string The source file path (must be a non-empty string).
 --- @param dst string The destination file path (must be a non-empty string).
 --- @return boolean true on success.
-function lua51sys.copy_file(src, dst)
+function luaSysBridge.copy_file(src, dst)
 	-- Check parameters
 	if type(src) ~= "string" or src == "" then
 		error("Invalid source path (src)")
@@ -106,7 +106,7 @@ function lua51sys.copy_file(src, dst)
 	end
 
 	-- Check if src exists and is a file
-	if not lua51sys.file_exists(src) then
+	if not luaSysBridge.file_exists(src) then
 		error("Source does not exist or is not a file: " .. tostring(src))
 	end
 
@@ -154,7 +154,7 @@ function lua51sys.copy_file(src, dst)
 		local perm_str = src_attr.permissions
 		local mode_num = parse_permissions(perm_str)
 		if mode_num then
-			local success = lua51sys.execute(string.format("chmod %o %s", mode_num, "'" .. dst:gsub("'", "'\\''") .. "'"))
+			local success = luaSysBridge.execute(string.format("chmod %o %s", mode_num, "'" .. dst:gsub("'", "'\\''") .. "'"))
 			if not success then
 				-- Optionally warn or error; here we ignore failure silently
 			end
@@ -167,7 +167,7 @@ end
 --- Lua equivalent of Python "os.path.dirname(__file__)".
 --- Returns the real location of the executing script.
 --- @return string The directory path of the script, or "." if not found.
-function lua51sys.get_script_dir()
+function luaSysBridge.get_script_dir()
 	for i = 2, math.huge do
 		local info = debug.getinfo(i, "S")
 		if not info then
@@ -184,7 +184,7 @@ end
 --- In Lua 5.1/LuaJIT, the close parameter is always treated as true (Lua state is closed).
 --- @param code boolean|number|nil The exit code (boolean true/false maps to 0/1, number used directly, defaults to 0).
 --- @param close boolean|nil Whether to close the Lua environment (defaults to true; ignored in Lua 5.1/LuaJIT).
-function lua51sys.exit(code, close)
+function luaSysBridge.exit(code, close)
 	-- Handle boolean code properly (true -> 0, false -> 1)
 	if type(code) == "boolean" then
 		code = code and 0 or 1
@@ -208,7 +208,7 @@ end
 --- @return boolean success True if the command succeeded (exit code == 0), false otherwise.
 --- @return number code The exit code (or error code if applicable).
 --- @return string output The combined stdout/stderr output.
-function lua51sys.iopopen_stdout_err(cmd)
+function luaSysBridge.iopopen_stdout_err(cmd)
 	local is_lua51 = (_VERSION == "Lua 5.1" or _VERSION:match("LuaJIT"))
 	local full_cmd = cmd .. " 2>&1"
 
@@ -260,7 +260,7 @@ end
 --- Calculate file MD5 using the system md5sum command.
 --- @param file_path string Path to the file to hash.
 --- @return string|nil Lowercase 32-character hexadecimal MD5 digest on success; nil on error.
-function lua51sys.calculate_md5(file_path)
+function luaSysBridge.calculate_md5(file_path)
 	-- Validate argument
 	if type(file_path) ~= "string" or file_path == "" then
 		return nil
@@ -270,8 +270,8 @@ function lua51sys.calculate_md5(file_path)
 	local escaped_path = "'" .. file_path:gsub("'", "'\\''") .. "'"
 	local command = "md5sum " .. escaped_path
 
-	-- Execute command (assumes lua51sys.iopopen_stdout_err is available and tested)
-	local success, code, output = lua51sys.iopopen_stdout_err(command)
+	-- Execute command (assumes luaSysBridge.iopopen_stdout_err is available and tested)
+	local success, code, output = luaSysBridge.iopopen_stdout_err(command)
 
 	-- Check execution result
 	if not success or code ~= 0 then
@@ -298,7 +298,7 @@ end
 --- Works like "shutil.which"; returns the absolute path to the executable or nil if not found.
 --- @param cmd string Command name to search for.
 --- @return string|nil Absolute path to executable on success; nil if not found or on error.
-function lua51sys.which(cmd)
+function luaSysBridge.which(cmd)
 	-- Validate argument
 	if type(cmd) ~= "string" or cmd == "" then
 		return nil
@@ -308,8 +308,8 @@ function lua51sys.which(cmd)
 	local escaped_cmd = "'" .. cmd:gsub("'", "'\\''") .. "'"
 	local command = "which " .. escaped_cmd
 
-	-- Execute command (assumes lua51sys.iopopen_stdout_err is available and tested)
-	local success, code, stdout = lua51sys.iopopen_stdout_err(command)
+	-- Execute command (assumes luaSysBridge.iopopen_stdout_err is available and tested)
+	local success, code, stdout = luaSysBridge.iopopen_stdout_err(command)
 
 	-- Check execution result
 	if not success or code ~= 0 then
@@ -319,9 +319,9 @@ function lua51sys.which(cmd)
 	-- Trim trailing whitespace
 	local path = stdout:match("^(.-)%s*$")
 
-	-- Return path only if non-empty and file exists (assumes lua51sys.file_exists is available)
+	-- Return path only if non-empty and file exists (assumes luaSysBridge.file_exists is available)
 	if path and path ~= "" then
-		if lua51sys.file_exists(path) then
+		if luaSysBridge.file_exists(path) then
 			return path
 		else
 			return nil
@@ -333,8 +333,8 @@ end
 
 --- Returns the host name.
 --- @return string hostname Host name without trailing newline.
-function lua51sys.get_hostname()
-	local success, code, stdout = lua51sys.iopopen_stdout_err("hostname")
+function luaSysBridge.get_hostname()
+	local success, code, stdout = luaSysBridge.iopopen_stdout_err("hostname")
 	if not success then
 		error("Failed to obtain host name: " .. stdout)
 	end
@@ -346,7 +346,7 @@ end
 --- The function dismiss errors equal to "interrupted" or "interrupted!" (typical from Ctrl+C handlers)
 --- and prints other errors to stdout.
 --- @param main function Function to call under pcall.
-function lua51sys.pcall_interrupted(main)
+function luaSysBridge.pcall_interrupted(main)
 	-- Use `pcall` to handle the error caused by Ctrl+C:
 	local status, err = pcall(main)
 	if not status then
@@ -361,14 +361,14 @@ end
 --- Check SSH reachability by pinging a host and exit on failure.
 --- This function only checks the boolean success value returned by that call.
 --- @param ip string IP address or hostname to ping
---- @return nil Terminates the process with `lua51sys.exit(1)` when ping fails
-function lua51sys.ssh_check_connection(ip)
-	local success, code = lua51sys.execute("ping -i 0.3 -c 2 " .. ip .. " > /dev/null 2>&1")
+--- @return nil Terminates the process with `luaSysBridge.exit(1)` when ping fails
+function luaSysBridge.ssh_check_connection(ip)
+	local success, code = luaSysBridge.execute("ping -i 0.3 -c 2 " .. ip .. " > /dev/null 2>&1")
 
-	-- We only check `success`, which is a boolean in the `lua51sys.execute`
+	-- We only check `success`, which is a boolean in the `luaSysBridge.execute`
 	if not success then
 		print("WARNING - SSH CONNECTION NOT WORKING! CHECK SSH! Exit code: " .. tostring(code))
-		lua51sys.exit(1)
+		luaSysBridge.exit(1)
 	end
 end
 
@@ -376,7 +376,7 @@ end
 --- Returns the value of the PWD environment variable when available.
 --- Falls back to calling the system `pwd` command if PWD is not set.
 --- @return string current working directory path or "." when unknown
-function lua51sys.pwd()
+function luaSysBridge.pwd()
 	local path = os.getenv("PWD")
 	if not path then
 		local p = io.popen("pwd")
@@ -392,12 +392,12 @@ end
 --- Prints keys and values; when a value is a table, recurses with increased indentation.
 --- @param tbl table Table to print
 --- @param indent string|nil Current indentation prefix (optional)
-function lua51sys.printTable(tbl, indent)
+function luaSysBridge.printTable(tbl, indent)
 	indent = indent or "" -- default indentation
 	for key, value in pairs(tbl) do
 		if type(value) == "table" then
 			print(indent .. key .. ":")
-			lua51sys.printTable(value, indent .. "  ") -- recursion with increased indentation
+			luaSysBridge.printTable(value, indent .. "  ") -- recursion with increased indentation
 		else
 			print(indent .. key .. ": " .. tostring(value))
 		end
@@ -408,7 +408,7 @@ end
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the file.
 --- @return boolean True if the path exists and is a regular file, false otherwise.
-function lua51sys.file_exists(path)
+function luaSysBridge.file_exists(path)
 	local attr = lfs.attributes(path, "mode")
 	return attr ~= nil and attr == "file"
 end
@@ -417,7 +417,7 @@ end
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the directory.
 --- @return boolean True if the path exists and is a directory, false otherwise.
-function lua51sys.directory_exists(path)
+function luaSysBridge.directory_exists(path)
 	local attr = lfs.attributes(path, "mode")
 	return attr ~= nil and attr == "directory"
 end
@@ -427,7 +427,7 @@ end
 --- This function validates its argument and raises an error for invalid input.
 --- @param path string Non-empty file system path to check.
 --- @return boolean True if the path is a symbolic link, false otherwise.
-function lua51sys.symlink_exists(path)
+function luaSysBridge.symlink_exists(path)
 	-- Validate argument
 	if type(path) ~= "string" or path == "" then
 		error("Invalid path: expected a non-empty string")
@@ -439,7 +439,7 @@ function lua51sys.symlink_exists(path)
 	local cmd = "test -L " .. escaped_path
 
 	-- Execute the test command; success == true means path is a symlink.
-	local success, _ = lua51sys.execute(cmd)
+	local success, _ = luaSysBridge.execute(cmd)
 	return success
 end
 
@@ -448,12 +448,12 @@ end
 --- magic characters, preserving `*` and `?` semantics, and then wrapping the
 --- pattern with `.*` on both ends so partial matches succeed.
 --- Example:
----     local matches = lua51sys.find("/var/log", "*.log")
+---     local matches = luaSysBridge.find("/var/log", "*.log")
 ---     for _, name in ipairs(matches) do print(name) end
 --- @param dir string Directory path where the search will be performed.
 --- @param pattern_base string Glob-like pattern to match against file names.
 --- @return table Array (integer-keyed) of file names (strings) in `dir` that match the converted pattern.
-function lua51sys.find(dir, pattern_base)
+function luaSysBridge.find(dir, pattern_base)
 	local files = {}
 	-- local lua_pattern = pattern_base
 	-- :gsub("([%.%+%-%%%[%]%^%$%(%)])", "%%%1") -- Escape for special marks
@@ -483,7 +483,7 @@ end
 --- On error (e.g. invalid directory), returns `nil`.
 --- @param dir string Path to the directory to list.
 --- @return string[]|nil files A numerically indexed array of file names, or `nil` on error.
-function lua51sys.ls_dir(dir)
+function luaSysBridge.ls_dir(dir)
 	local files = {}
 	for entry in lfs.dir(dir) do
 		if entry ~= "." and entry ~= ".." then
@@ -497,4 +497,4 @@ function lua51sys.ls_dir(dir)
 	return files
 end
 
-return lua51sys
+return luaSysBridge

@@ -459,7 +459,7 @@ function luaSysBridge.table_save_to_file(tbl, file_path)
 	return true
 end
 
---- Prompt the user to select a element value (string or number) from a given table.
+--- Prompt the user to select a value of element (string or number) from a given table.
 --- The table must contain only strings or numbers (unnested).
 --- If the user fails to select a valid option within the allowed attempts,
 --- or provides no input, the function returns an empty string.

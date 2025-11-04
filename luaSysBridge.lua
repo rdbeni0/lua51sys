@@ -459,16 +459,16 @@ function luaSysBridge.table_save_to_file(tbl, file_path)
 	return true
 end
 
---- Prompt the user to select a string value from a given table.
---- The table must contain only string elements (unnested).
+--- Prompt the user to select a element value (string or number) from a given table.
+--- The table must contain only strings or numbers (unnested).
 --- If the user fails to select a valid option within the allowed attempts,
 --- or provides no input, the function returns an empty string.
---- @param options table A table of string values to choose from.
---- @param prompt string Optional message displayed before listing options (default: "Choose element/string:")
+--- @param options table A table of elements to choose from.
+--- @param prompt string Optional message displayed before listing options (default: "Choose element:")
 --- @param max_attempts number Maximum number of attempts before returning an empty string (default: 0 = unlimited)
---- @return string The selected string value, or an empty string if no valid choice was made.
-function luaSysBridge.table_select_string(options, prompt, max_attempts)
-	prompt = prompt or "Choose element/string:"
+--- @return string The selected value, or an empty string if no valid choice was made.
+function luaSysBridge.table_select_element(options, prompt, max_attempts)
+	prompt = prompt or "Choose element:"
 	max_attempts = max_attempts or 0
 
 	if type(options) ~= "table" or #options == 0 then

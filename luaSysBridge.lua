@@ -455,7 +455,7 @@ function luaSysBridge.table_save_to_file(tbl, file_path)
 
 	file:write(lua_code)
 	file:close()
-	print("INFO: table saved successfully to: " .. file_path)
+	-- print("INFO: table saved successfully to: " .. file_path)
 	return true
 end
 

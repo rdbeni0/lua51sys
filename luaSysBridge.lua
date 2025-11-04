@@ -483,7 +483,7 @@ function luaSysBridge.table_select_string(options, prompt, max_attempts)
 		for i, value in ipairs(options) do
 			print(string.format("[%d] %s", i, tostring(value)))
 		end
-		io.write(string.format("Enter a number (1-%d) and press <ENTER>: ", count))
+		io.write(string.format("Enter a number [1-%d] and press <ENTER>: ", count))
 		local input = io.read()
 
 		if not input or input == "" then

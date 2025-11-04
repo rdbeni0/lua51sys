@@ -392,16 +392,71 @@ end
 --- Prints keys and values; when a value is a table, recurses with increased indentation.
 --- @param tbl table Table to print
 --- @param indent string|nil Current indentation prefix (optional)
-function luaSysBridge.printTable(tbl, indent)
+function luaSysBridge.table_print(tbl, indent)
 	indent = indent or "" -- default indentation
 	for key, value in pairs(tbl) do
 		if type(value) == "table" then
 			print(indent .. key .. ":")
-			luaSysBridge.printTable(value, indent .. "  ") -- recursion with increased indentation
+			luaSysBridge.table_print(value, indent .. "  ") -- recursion with increased indentation
 		else
 			print(indent .. key .. ": " .. tostring(value))
 		end
 	end
+end
+
+--- Save a Lua table to a file as valid Lua code.
+--- The function serializes a given table (including nested tables) into
+--- a Lua-readable format using "return { ... }" syntax. Unsupported types
+--- such as functions or userdata are written as "nil".
+--- @param tbl table The table to serialize and save
+--- @param file_path string The file path where the Lua code will be written
+--- @return boolean True if the file was written successfully, false otherwise
+function luaSysBridge.table_save_to_file(tbl, file_path)
+	-- Local helper function that converts a Lua table into a Lua code string
+	local function table_to_lua_code(t, indent)
+		indent = indent or 0
+		local pad = string.rep(" ", indent)
+		local lines = { "{" }
+		for k, v in pairs(t) do
+			local key
+			if type(k) == "string" then
+				key = string.format("[%q]", k)
+			else
+				key = string.format("[%s]", tostring(k))
+			end
+
+			local value
+			if type(v) == "table" then
+				-- Recursively convert nested tables
+				value = table_to_lua_code(v, indent + 4)
+			elseif type(v) == "string" then
+				value = string.format("%q", v)
+			elseif type(v) == "number" or type(v) == "boolean" then
+				value = tostring(v)
+			else
+				-- Unsupported types (e.g., functions, userdata, threads) are stored as nil
+				value = "nil"
+			end
+
+			table.insert(lines, string.rep(" ", indent + 4) .. key .. " = " .. value .. ",")
+		end
+		table.insert(lines, pad .. "}")
+		return table.concat(lines, "\n")
+	end
+
+	-- Main logic: generate Lua code and write it to the specified file
+	local lua_code = "return " .. table_to_lua_code(tbl) .. "\n"
+
+	local file, err = io.open(file_path, "w")
+	if not file then
+		print("ERROR: could not open file for writing: " .. err)
+		return false
+	end
+
+	file:write(lua_code)
+	file:close()
+	print("INFO: table saved successfully to: " .. file_path)
+	return true
 end
 
 --- Check whether a path points to an existing regular file.

@@ -459,6 +459,51 @@ function luaSysBridge.table_save_to_file(tbl, file_path)
 	return true
 end
 
+--- Prompt the user to select a string value from a given table.
+--- The table must contain only string elements (unnested).
+--- If the user fails to select a valid option within the allowed attempts,
+--- or provides no input, the function returns an empty string.
+--- @param options table A table of string values to choose from.
+--- @param prompt string Optional message displayed before listing options (default: "Choose element/string:")
+--- @param max_attempts number Maximum number of attempts before returning an empty string (default: 0 = unlimited)
+--- @return string The selected string value, or an empty string if no valid choice was made.
+function table_select_string(options, prompt, max_attempts)
+	prompt = prompt or "Choose element/string:"
+	max_attempts = max_attempts or 0
+
+	if type(options) ~= "table" or #options == 0 then
+		return ""
+	end
+
+	local attempt = 0
+	local count = #options
+
+	while true do
+		print(prompt)
+		for i, value in ipairs(options) do
+			print(string.format("[%d] %s", i, tostring(value)))
+		end
+		io.write(string.format("Enter a number (1-%d) and press <ENTER>: ", count))
+		local input = io.read()
+
+		if not input or input == "" then
+			return ""
+		end
+
+		local num = tonumber(input)
+		if num and num >= 1 and num <= count then
+			return options[num]
+		end
+
+		attempt = attempt + 1
+		print("ERROR: Invalid selection. Please try again.")
+
+		if max_attempts > 0 and attempt >= max_attempts then
+			return ""
+		end
+	end
+end
+
 --- Check whether a path points to an existing regular file.
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the file.

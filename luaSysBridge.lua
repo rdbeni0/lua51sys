@@ -64,7 +64,7 @@ end
 --- @return boolean|nil true when directory was removed successfully.
 --- @return string|nil Error message when removal failed or directory does not exist.
 function luaSysBridge.remove_dir(dir_path)
-	if luaSysBridge.directory_exists(dir_path) then
+	if luaSysBridge.exists_directory(dir_path) then
 		local success, err = luaSysBridge.execute("rm -rf " .. dir_path)
 		if success then
 			return true
@@ -106,7 +106,7 @@ function luaSysBridge.copy_file(src, dst)
 	end
 
 	-- Check if src exists and is a file
-	if not luaSysBridge.file_exists(src) then
+	if not luaSysBridge.exists_file(src) then
 		error("Source does not exist or is not a file: " .. tostring(src))
 	end
 
@@ -319,9 +319,9 @@ function luaSysBridge.which(cmd)
 	-- Trim trailing whitespace
 	local path = stdout:match("^(.-)%s*$")
 
-	-- Return path only if non-empty and file exists (assumes luaSysBridge.file_exists is available)
+	-- Return path only if non-empty and file exists (assumes luaSysBridge.exists_file is available)
 	if path and path ~= "" then
-		if luaSysBridge.file_exists(path) then
+		if luaSysBridge.exists_file(path) then
 			return path
 		else
 			return nil
@@ -408,7 +408,7 @@ end
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the file.
 --- @return boolean True if the path exists and is a regular file, false otherwise.
-function luaSysBridge.file_exists(path)
+function luaSysBridge.exists_file(path)
 	local attr = lfs.attributes(path, "mode")
 	return attr ~= nil and attr == "file"
 end
@@ -417,7 +417,7 @@ end
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the directory.
 --- @return boolean True if the path exists and is a directory, false otherwise.
-function luaSysBridge.directory_exists(path)
+function luaSysBridge.exists_directory(path)
 	local attr = lfs.attributes(path, "mode")
 	return attr ~= nil and attr == "directory"
 end
@@ -427,7 +427,7 @@ end
 --- This function validates its argument and raises an error for invalid input.
 --- @param path string Non-empty file system path to check.
 --- @return boolean True if the path is a symbolic link, false otherwise.
-function luaSysBridge.symlink_exists(path)
+function luaSysBridge.exists_symlink(path)
 	-- Validate argument
 	if type(path) ~= "string" or path == "" then
 		error("Invalid path: expected a non-empty string")

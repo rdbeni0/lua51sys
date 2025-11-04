@@ -467,7 +467,7 @@ end
 --- @param prompt string Optional message displayed before listing options (default: "Choose element/string:")
 --- @param max_attempts number Maximum number of attempts before returning an empty string (default: 0 = unlimited)
 --- @return string The selected string value, or an empty string if no valid choice was made.
-function table_select_string(options, prompt, max_attempts)
+function luaSysBridge.table_select_string(options, prompt, max_attempts)
 	prompt = prompt or "Choose element/string:"
 	max_attempts = max_attempts or 0
 

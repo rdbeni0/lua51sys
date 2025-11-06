@@ -707,4 +707,22 @@ function luaSysBridge.ls_dir(dir)
 	return files
 end
 
+--- Prints a formatted log message.
+--- If the message type is shorter than 5 characters, spaces are added to align it.
+--- @param msgType string The type or category of the log message (INFO, WARN, ERROR).
+--- @param msg string The message to print.
+--- @return void
+function luaSysBridge.log_print(msgType, msg)
+	-- Get the length of msgType
+	local msgTypeLen = string.len(msgType)
+
+	-- Pad msgType with spaces if it is shorter than 5 characters
+	if msgTypeLen < 5 then
+		msgType = msgType .. string.rep(" ", 5 - msgTypeLen)
+	end
+
+	-- Print formatted message
+	print("> " .. msgType .. " : " .. msg)
+end
+
 return luaSysBridge

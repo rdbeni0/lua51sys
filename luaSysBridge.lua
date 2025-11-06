@@ -530,23 +530,22 @@ end
 --- @param file_path string The path to the Lua file to load
 --- @return table|nil The loaded table if successful, or nil if loading failed
 function luaSysBridge.table_get_from_file(file_path)
-    -- Attempt to load and execute the Lua file
-    local ok, result = pcall(dofile, file_path)
-    if not ok then
-        print("ERROR: could not load table from file: " .. tostring(result))
-        return nil
-    end
+	-- Attempt to load and execute the Lua file
+	local ok, result = pcall(dofile, file_path)
+	if not ok then
+		print("ERROR: could not load table from file: " .. tostring(result))
+		return nil
+	end
 
-    -- Ensure the file returned a table
-    if type(result) ~= "table" then
-        print("ERROR: file did not return a table: " .. tostring(file_path))
-        return nil
-    end
+	-- Ensure the file returned a table
+	if type(result) ~= "table" then
+		print("ERROR: file did not return a table: " .. tostring(file_path))
+		return nil
+	end
 
-    -- Return the loaded table
-    return result
+	-- Return the loaded table
+	return result
 end
-
 
 --- Ask the user for confirmation input <Y/y/Yes/yes>.
 --- Prints a message and waits for user input from stdin (prompt).
@@ -677,39 +676,48 @@ function luaSysBridge.exists_symlink(path)
 	return success
 end
 
---- Performs a file-name search inside `dir` using a glob-like `pattern_base`.
---- The function converts `pattern_base` into a Lua pattern by escaping
---- magic characters, preserving `*` and `?` semantics, and then wrapping the
---- pattern with `.*` on both ends so partial matches succeed.
+--- Performs a file or directory name search inside `dir` using a glob-like `pattern_base`.
+--- Converts `pattern_base` into a Lua pattern by escaping magic characters (except * and ?),
+--- preserving their semantics, and wrapping the pattern with `.*` for partial matches.
+---
 --- Example:
----     local matches = luaSysBridge.find("/var/log", "*.log")
----     for _, name in ipairs(matches) do print(name) end
+---     local files = luaSysBridge.find("/var/log", "*.log")       -- only files
+---     local both  = luaSysBridge.find("/var", "*", true)         -- files + dirs
+---     local dirs  = luaSysBridge.find("/var", "*log*", "dirs")   -- only dirs
+---
 --- @param dir string Directory path where the search will be performed.
---- @param pattern_base string Glob-like pattern to match against file names.
---- @return table Array (integer-keyed) of file names (strings) in `dir` that match the converted pattern.
-function luaSysBridge.find(dir, pattern_base)
-	local files = {}
-	-- local lua_pattern = pattern_base
-	-- :gsub("([%.%+%-%%%[%]%^%$%(%)])", "%%%1") -- Escape for special marks
-	-- :gsub("\\", "%%\\") -- Escape for `\`
-	-- :gsub("%?", ".")   -- Change `?` na `.`
+--- @param pattern_base string Glob-like pattern to match against file or directory names.
+--- @param mode any Optional. If nil: only files. If truthy: files + dirs. If string "dirs" (or non-nil non-true): only dirs.
+--- @return table Array (integer-keyed) of file or directory names that match the converted pattern.
+function luaSysBridge.find(dir, pattern_base, mode)
+	local results = {}
+	pattern_base = pattern_base or "*"
 
-	local lua_pattern = pattern_base:gsub("([%.%+%-%%%[%]%^%$%(%)%*%?])", "%%%1"):gsub("\\", "%%\\")
-	-- Dodajemy .* na poczatku i koncu
+	-- Escape Lua magic characters except * and ?
+	local lua_pattern = pattern_base:gsub("([%.%+%-%%%[%]%^%$%(%)])", "%%%1"):gsub("%*", ".*"):gsub("%?", ".")
+
 	lua_pattern = ".*" .. lua_pattern .. ".*"
+
+	local include_files = (mode == nil) or (mode == true)
+	local include_dirs = (mode and mode ~= true)
 
 	for entry in lfs.dir(dir) do
 		if entry ~= "." and entry ~= ".." then
 			local full_path = dir .. "/" .. entry
 			local attr = lfs.attributes(full_path)
-			if attr and attr.mode == "file" then
+			if attr then
+				local is_file = (attr.mode == "file")
+				local is_dir = (attr.mode == "directory")
+
 				if entry:match(lua_pattern) then
-					table.insert(files, entry)
+					if (is_file and include_files) or (is_dir and include_dirs) then
+						table.insert(results, entry)
+					end
 				end
 			end
 		end
 	end
-	return files
+	return results
 end
 
 --- Lists regular files (non-recursive) in a given directory.

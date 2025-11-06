@@ -709,7 +709,7 @@ end
 
 --- Prints a formatted log message.
 --- If the message type is shorter than 5 characters, spaces are added to align it.
---- @param msgType string The type or category of the log message (INFO, WARN, ERROR).
+--- @param msgType string The type or category of the log message (INFO, WARN, ERROR, CMD).
 --- @param msg string The message to print.
 --- @return void
 function luaSysBridge.log_print(msgType, msg)

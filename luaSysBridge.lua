@@ -530,22 +530,23 @@ end
 --- @param file_path string The path to the Lua file to load
 --- @return table|nil The loaded table if successful, or nil if loading failed
 function luaSysBridge.table_get_from_file(file_path)
-	-- Attempt to load and execute the Lua file
-	local ok, result = pcall(dofile, file_path)
-	if not ok then
-		print("ERROR: could not load table from file: " .. tostring(result))
-		return nil
-	end
+    -- Attempt to load and execute the Lua file
+    local ok, result = pcall(dofile, file_path)
+    if not ok then
+        print("ERROR: could not load table from file: " .. tostring(result))
+        return nil
+    end
 
-	-- Ensure the file returned a table
-	if type(result) ~= "table" then
-		print("ERROR: file did not return a table: " .. tostring(file_path))
-		return nil
-	end
+    -- Ensure the file returned a table
+    if type(result) ~= "table" then
+        print("ERROR: file did not return a table: " .. tostring(file_path))
+        return nil
+    end
 
-	-- Return the loaded table
-	return result
+    -- Return the loaded table
+    return result
 end
+
 
 --- Ask the user for confirmation input <Y/y/Yes/yes>.
 --- Prints a message and waits for user input from stdin (prompt).
@@ -731,7 +732,7 @@ function luaSysBridge.ls_dir(dir)
 end
 
 --- Prints a formatted log message.
---- If the message type is shorter than 4 characters, spaces are added to align it.
+--- If the message type is shorter than 5 characters, spaces are added to align it.
 --- @param msgType string The type or category of the log message (INFO, WARN, ERROR, CMD).
 --- @param msg string The message to print.
 --- @return void
@@ -739,9 +740,9 @@ function luaSysBridge.log_print(msgType, msg)
 	-- Get the length of msgType
 	local msgTypeLen = string.len(msgType)
 
-	-- Pad msgType with spaces if it is shorter than 4 characters
-	if msgTypeLen < 4 then
-		msgType = msgType .. string.rep(" ", 4 - msgTypeLen)
+	-- Pad msgType with spaces if it is shorter than 5 characters
+	if msgTypeLen < 5 then
+		msgType = msgType .. string.rep(" ", 5 - msgTypeLen)
 	end
 
 	-- Print formatted message

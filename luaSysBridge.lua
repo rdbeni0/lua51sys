@@ -383,12 +383,12 @@ function luaSysBridge.ssh_check_connection(ip)
 end
 
 --- Get current working directory: read in the place where the lua script was run.
---- Doesn't work with lfs.chdir() (luaSysBridge.chdir()):
---- only the path where the script was run will always be returned.
+--- Doesn't work with lfs.chdir() (which is wrapper around luaSysBridge.chdir()).
+--- Only the path where the script was run will always be returned.
 --- Returns the value of the PWD environment variable when available.
 --- Falls back to calling the system `pwd` command if PWD is not set.
 --- @return string current working directory path or "." when unknown
-function luaSysBridge.pwd_os_now()
+function luaSysBridge.pwd_os_pwd()
 	local path = os.getenv("PWD")
 	if not path then
 		local p = io.popen("pwd")

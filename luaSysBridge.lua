@@ -524,6 +524,30 @@ function luaSysBridge.table_select_element(options, prompt, max_attempts)
 	end
 end
 
+--- Load a Lua table from a file containing valid Lua code.
+--- The file must return a table (e.g., created by luaSysBridge.table_save_to_file).
+--- Uses dofile() to safely execute and return the table.
+--- @param file_path string The path to the Lua file to load
+--- @return table|nil The loaded table if successful, or nil if loading failed
+function luaSysBridge.table_get_from_file(file_path)
+    -- Attempt to load and execute the Lua file
+    local ok, result = pcall(dofile, file_path)
+    if not ok then
+        print("ERROR: could not load table from file: " .. tostring(result))
+        return nil
+    end
+
+    -- Ensure the file returned a table
+    if type(result) ~= "table" then
+        print("ERROR: file did not return a table: " .. tostring(file_path))
+        return nil
+    end
+
+    -- Return the loaded table
+    return result
+end
+
+
 --- Ask the user for confirmation input <Y/y/Yes/yes>.
 --- Prints a message and waits for user input from stdin (prompt).
 --- Returns true only if the user types "y" or "yes" (case-insensitive).

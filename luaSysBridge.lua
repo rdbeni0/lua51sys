@@ -504,6 +504,96 @@ function luaSysBridge.table_select_element(options, prompt, max_attempts)
 	end
 end
 
+--- Ask the user for confirmation input <Y/y/Yes/yes>.
+--- Prints a message and waits for user input from stdin (prompt).
+--- Returns true only if the user types "y" or "yes" (case-insensitive).
+--- @param promptMsg string The message to display before the prompt.
+--- @return boolean True if the user confirmed, false otherwise.
+function luaSysBridge.prompt_y_yes(promptMsg)
+	io.write(promptMsg .. " - <Y/y/Yes/yes>? ")
+	io.flush()
+
+	local input = io.read("*l")
+	if not input then
+		io.stderr:write("ERROR: Could not read from stdin!\n")
+		luaSysBridge.exit(1)
+	end
+
+	-- trim and lowercase
+	input = string.lower((string.gsub(input, "^%s*(.-)%s*$", "%1")))
+	if input == "y" or input == "yes" then
+		return true
+	end
+
+	return false
+end
+
+--- Wait for the user to press <ENTER> to continue.
+--- Prints a message and pauses until the user presses <ENTER>.
+--- @param promptMsg string The message to display before waiting.
+--- @return boolean True if the user confirmed
+function luaSysBridge.prompt_enter(promptMsg)
+	io.write(promptMsg .. " - <ENTER>")
+	io.flush()
+
+	local input = io.read("*l")
+	if input == nil then
+		io.stderr:write("ERROR: Could not read from stdin!\n")
+		luaSysBridge.exit(1)
+	end
+
+	return true
+end
+
+--- Replace a line in a file that starts with a given string.
+--- Reads the file, replaces any line that starts with the specified prefix,
+--- and writes the modified content back to the same file.
+--- Returns true on success, false on any error.
+--- All params are required: if nil or invalid, an error message is printed.
+--- @param filePath string The path to the file.
+--- @param startsWith string The prefix to search for at the beginning of each line.
+--- @param newLine string The new line to replace matching lines with.
+--- @return boolean True if operation succeeded, false otherwise.
+function luaSysBridge.replace_line_in_file(filePath, startsWith, newLine)
+	if filePath == nil or startsWith == nil or newLine == nil then
+		io.stderr:write("ERROR: Invalid parameters! Please provide correct params!\n")
+		return false
+	end
+
+	local file = io.open(filePath, "r")
+	if not file then
+		io.stderr:write("ERROR: File does not exist or cannot be opened: " .. filePath .. "\n")
+		return false
+	end
+
+	-- Read all lines
+	local lines = {}
+	for line in file:lines() do
+		if string.sub(line, 1, string.len(startsWith)) == startsWith then
+			table.insert(lines, newLine)
+		else
+			table.insert(lines, line)
+		end
+	end
+	file:close()
+
+	-- Write modified lines back to file
+	local fileOut = io.open(filePath, "w")
+	if not fileOut then
+		io.stderr:write("ERROR: Unable to write to the file: " .. filePath .. "\n")
+		return false
+	end
+	for i, line in ipairs(lines) do
+		fileOut:write(line)
+		if i < #lines then
+			fileOut:write("\n")
+		end
+	end
+	fileOut:close()
+
+	return true
+end
+
 --- Check whether a path points to an existing regular file.
 --- Implementation without lfs is possible but will be slower.
 --- @param path string Path to the file.

@@ -9,6 +9,7 @@
 --- When a new version of Lua is released, this module should be reviewed (e.g., with AI assistance) and updated to align with the latest standards if necessary.
 --- Backward and forward compatibility must always be preserved, especially for Lua 5.1 and LuaJIT.
 
+--- https://lunarmodules.github.io/luafilesystem/manual.html
 local lfs = require("lfs")
 
 local luaSysBridge = {}
@@ -162,6 +163,15 @@ function luaSysBridge.copy_file(src, dst)
 	end
 
 	return true
+end
+
+--- Wrapper around lfs.chdir().
+--- Wraps LuaFileSystem's chdir for future compatibility and consistent API.
+--- Works well with luaSysBridge.pwd_currentdir() (which is wrapper around lfs.currentdir()).
+--- @param path string The path to change the current working directory to.
+--- @return boolean|nil true on success; nil plus error message on failure.
+function luaSysBridge.chdir(path)
+	return lfs.chdir(path)
 end
 
 --- Lua equivalent of Python "os.path.dirname(__file__)".
@@ -372,11 +382,13 @@ function luaSysBridge.ssh_check_connection(ip)
 	end
 end
 
---- Get current working directory.
+--- Get current working directory: read in the place where the lua script was run.
+--- Doesn't work with lfs.chdir() (luaSysBridge.chdir()):
+--- only the path where the script was run will always be returned.
 --- Returns the value of the PWD environment variable when available.
 --- Falls back to calling the system `pwd` command if PWD is not set.
 --- @return string current working directory path or "." when unknown
-function luaSysBridge.pwd()
+function luaSysBridge.pwd_os_now()
 	local path = os.getenv("PWD")
 	if not path then
 		local p = io.popen("pwd")
@@ -386,6 +398,14 @@ function luaSysBridge.pwd()
 		end
 	end
 	return path or "."
+end
+
+--- Wrapper around lfs.currentdir().
+--- Wraps LuaFileSystem's currentdir for future compatibility and consistent API.
+--- Works well with luaSysBridge.chdir() (which is wrapper around lfs.chdir()).
+--- @return string|nil A string with the current working directory or nil plus an error string.
+function luaSysBridge.pwd_currentdir()
+	return lfs.currentdir()
 end
 
 --- Pretty-print a given lua table recursively to stdout.
@@ -554,7 +574,7 @@ end
 --- @param startsWith string The prefix to search for at the beginning of each line.
 --- @param newLine string The new line to replace matching lines with.
 --- @return boolean True if operation succeeded, false otherwise.
-function luaSysBridge.replace_line_in_file(filePath, startsWith, newLine)
+function luaSysBridge.replace_in_file_line(filePath, startsWith, newLine)
 	if filePath == nil or startsWith == nil or newLine == nil then
 		io.stderr:write("ERROR: Invalid parameters! Please provide correct params!\n")
 		return false

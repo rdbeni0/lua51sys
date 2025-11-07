@@ -43,21 +43,42 @@ function luaSysBridge.execute(cmd)
 end
 
 --- Create directories recursively, equivalent to the shell command "mkdir -p"
---- Attempts to create the named directory only if it does not already exist.
---- Returns true on success, false and an error message on failure.
---- @param directoryName string Directory path to create
+--- @param path string Directory path to create
 --- @return boolean success true when directory exists or was created successfully
 --- @return string|nil err Error message when creation failed, nil on success
-function luaSysBridge.mkdir(directoryName)
-	-- Check if the directory exists
-	if not lfs.attributes(directoryName, "mode") then
-		local success, err = lfs.mkdir(directoryName)
-		if not success then
-			print("Error creating directory: " .. err)
-			return false
-		end
+function luaSysBridge.mkdir(path)
+	-- Normalize path (remove trailing '/')
+	if path:sub(-1) == "/" then
+		path = path:sub(1, -2)
+	end
+
+	-- If the directory already exists, return success
+	local attr = lfs.attributes(path)
+	if attr and attr.mode == "directory" then
 		return true
 	end
+
+	-- Find parent directory
+	local parent = path:match("^(.*)/[^/]*$")
+	if parent and parent ~= "" then
+		local ok, err = luaSysBridge.mkdir(parent)
+		if not ok then
+			return false, err
+		end
+	end
+
+	-- Attempt to create the current directory
+	local ok, err = lfs.mkdir(path)
+	if not ok then
+		-- If another process created it in the meantime, that’s fine
+		attr = lfs.attributes(path)
+		if attr and attr.mode == "directory" then
+			return true
+		end
+		return false, err
+	end
+
+	return true
 end
 
 --- Remove a directory and its contents using command "rm -rf" if the directory exists.

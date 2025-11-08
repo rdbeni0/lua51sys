@@ -44,7 +44,7 @@ end
 
 --- Create directories recursively, equivalent to the shell command "mkdir -p"
 --- @param path string Directory path to create
---- @return boolean success true when directory exists or was created successfully
+--- @return boolean success true when directory exists or was created successfully, false otherwise
 --- @return string|nil err Error message when creation failed, nil on success
 function luaSysBridge.mkdir(path)
 	-- Normalize path (remove trailing '/')

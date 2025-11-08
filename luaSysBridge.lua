@@ -167,7 +167,8 @@ function luaSysBridge.copy_file(src, dst)
 				return nil
 			end
 			local function bits(s)
-				return (s:find("r") and 4 or 0) + (s:find("w") and 2 or 0) + (s:find("x") and 1 or 0) + (s:find("[sStT]") and 0 or 0)
+				return (s:find("r") and 4 or 0) + (s:find("w") and 2 or 0) + (s:find("x") and 1 or 0) +
+				(s:find("[sStT]") and 0 or 0)
 			end -- Ignore setuid/sticky for basic chmod
 			return bits(perm:sub(1, 3)) * 64 + bits(perm:sub(4, 6)) * 8 + bits(perm:sub(7, 9))
 		end
@@ -225,7 +226,7 @@ function luaSysBridge.exit(code, close)
 	close = not (close == false) -- Normalize close to true/false
 
 	if _VERSION == "Lua 5.1" or _VERSION:match("LuaJIT") then
-		os.exit(code) -- Ignore close, as Lua 5.1 and LuaJIT do not support the second argument (always closes Lua state)
+		os.exit(code)    -- Ignore close, as Lua 5.1 and LuaJIT do not support the second argument (always closes Lua state)
 	else
 		os.exit(code, close) -- Lua 5.2+ supports both arguments
 	end
@@ -382,7 +383,7 @@ function luaSysBridge.pcall_interrupted(main)
 	local status, err = pcall(main)
 	if not status then
 		if err and err ~= "interrupted" and err ~= "interrupted!" then
-		-- in case of Ctrl+C (err as interrupted) do nothing
+			-- in case of Ctrl+C (err as interrupted) do nothing
 		else
 			print("An error occurred: " .. tostring(err))
 		end

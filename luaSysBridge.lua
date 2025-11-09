@@ -114,6 +114,14 @@ function luaSysBridge.rename(file_path, new_file_path)
 	return os.rename(file_path, new_file_path)
 end
 
+--- Wrapper around os.getenv.
+--- @param var_name string Name of the environment variable.
+--- @return string|nil The value of the environment variable, or nil if not found.
+function luaSysBridge.getenv(var_name)
+	-- Currently all versions work the same, but this may change in the future (5.4++)
+	return os.getenv(var_name)
+end
+
 --- Copies the file from "src" to "dst", preserving content and permissions where possible.
 --- @param src string The source file path (must be a non-empty string).
 --- @param dst string The destination file path (must be a non-empty string).

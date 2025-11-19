@@ -105,6 +105,16 @@ function luaSysBridge.remove(file_path)
 	return os.remove(file_path)
 end
 
+--- Removes a symbolic link if it exists.
+--- @param link_path string Path to the symbolic link to remove.
+--- @return boolean|nil true on success; nil plus error message on failure.
+function luaSysBridge.unlink(link_path)
+	if luaSysBridge.exists_symlink(link_path) then
+		return luaSysBridge.remove(link_path)
+	end
+	return nil, "symlink does not exist"
+end
+
 --- Wrapper around os.rename.
 --- @param file_path string Current path of the file.
 --- @param new_file_path string New path for the file.
@@ -175,8 +185,7 @@ function luaSysBridge.copy_file(src, dst)
 				return nil
 			end
 			local function bits(s)
-				return (s:find("r") and 4 or 0) + (s:find("w") and 2 or 0) + (s:find("x") and 1 or 0) +
-				(s:find("[sStT]") and 0 or 0)
+				return (s:find("r") and 4 or 0) + (s:find("w") and 2 or 0) + (s:find("x") and 1 or 0) + (s:find("[sStT]") and 0 or 0)
 			end -- Ignore setuid/sticky for basic chmod
 			return bits(perm:sub(1, 3)) * 64 + bits(perm:sub(4, 6)) * 8 + bits(perm:sub(7, 9))
 		end
@@ -190,6 +199,33 @@ function luaSysBridge.copy_file(src, dst)
 				-- Optionally warn or error; here we ignore failure silently
 			end
 		end
+	end
+
+	return true
+end
+
+--- Create a symbolic link for a single file or directory on Linux.
+--- Uses the native `ln -s` command and LuaFileSystem for existence checks.
+--- Does not overwrite existing files or symlinks at the destination.
+--- @param src string The source file or directory to symlink.
+--- @param dst string The destination path where the symlink will be created.
+--- @return boolean|nil true on success; nil plus error message on failure.
+function luaSysBridge.symlink(src, dst)
+	-- Check that the source exists
+	local ok_src = lfs.attributes(src)
+	if not ok_src then
+		return nil, "Source path does not exist: " .. src
+	end
+
+	-- Check that destination does not exist
+	if lfs.attributes(dst) then
+		return nil, "Destination already exists: " .. dst
+	end
+
+	-- Create symlink using Linux command
+	local result = luaSysBridge.execute(string.format('ln -s "%s" "%s"', src, dst))
+	if result ~= true and result ~= 0 then
+		return nil, "Failed to create symlink: " .. dst
 	end
 
 	return true
@@ -234,7 +270,7 @@ function luaSysBridge.exit(code, close)
 	close = not (close == false) -- Normalize close to true/false
 
 	if _VERSION == "Lua 5.1" or _VERSION:match("LuaJIT") then
-		os.exit(code)    -- Ignore close, as Lua 5.1 and LuaJIT do not support the second argument (always closes Lua state)
+		os.exit(code) -- Ignore close, as Lua 5.1 and LuaJIT do not support the second argument (always closes Lua state)
 	else
 		os.exit(code, close) -- Lua 5.2+ supports both arguments
 	end
